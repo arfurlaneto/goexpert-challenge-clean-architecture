@@ -5,16 +5,19 @@ import (
 
 	"github.com/devfullcycle/20-CleanArch/internal/infra/grpc/pb"
 	"github.com/devfullcycle/20-CleanArch/internal/usecase"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type OrderService struct {
 	pb.UnimplementedOrderServiceServer
 	CreateOrderUseCase usecase.CreateOrderUseCase
+	ListOrdersUseCase  usecase.ListOrdersUseCase
 }
 
-func NewOrderService(createOrderUseCase usecase.CreateOrderUseCase) *OrderService {
+func NewOrderService(createOrderUseCase usecase.CreateOrderUseCase, listOrdersUseCase usecase.ListOrdersUseCase) *OrderService {
 	return &OrderService{
 		CreateOrderUseCase: createOrderUseCase,
+		ListOrdersUseCase:  listOrdersUseCase,
 	}
 }
 
@@ -34,4 +37,22 @@ func (s *OrderService) CreateOrder(ctx context.Context, in *pb.CreateOrderReques
 		Tax:        float32(output.Tax),
 		FinalPrice: float32(output.FinalPrice),
 	}, nil
+}
+
+func (s *OrderService) ListOrders(context.Context, *empty.Empty) (*pb.ListOrdersResponse, error) {
+	output, err := s.ListOrdersUseCase.Execute()
+	if err != nil {
+		return nil, err
+	}
+	response := &pb.ListOrdersResponse{}
+	for _, o := range output {
+		responseItem := &pb.ListOrdersResponse_Order{
+			Id:         o.ID,
+			Price:      float32(o.Price),
+			Tax:        float32(o.Tax),
+			FinalPrice: float32(o.FinalPrice),
+		}
+		response.Results = append(response.Results, responseItem)
+	}
+	return response, nil
 }

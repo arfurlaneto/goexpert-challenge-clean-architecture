@@ -49,3 +49,24 @@ func (suite *OrderRepositoryTestSuite) TestGivenAnOrder_WhenSave_ThenShouldSaveO
 	suite.Equal(order.Tax, orderResult.Tax)
 	suite.Equal(order.FinalPrice, orderResult.FinalPrice)
 }
+
+func (suite *OrderRepositoryTestSuite) TestGivenExistingOrders_WhenList_ThenShouldListExistingOrders() {
+	_, err := suite.Db.Exec("INSERT INTO orders (id, price, tax, final_price) VALUES (1, 100, 10, 110), (2, 200, 20, 220)")
+	suite.NoError(err)
+
+	repo := NewOrderRepository(suite.Db)
+	orders, err := repo.List()
+
+	suite.NoError(err)
+	suite.Len(orders, 2)
+
+	suite.Equal(orders[0].ID, "1")
+	suite.Equal(orders[0].Price, 100.0)
+	suite.Equal(orders[0].Tax, 10.0)
+	suite.Equal(orders[0].FinalPrice, 110.0)
+
+	suite.Equal(orders[1].ID, "2")
+	suite.Equal(orders[1].Price, 200.0)
+	suite.Equal(orders[1].Tax, 20.0)
+	suite.Equal(orders[1].FinalPrice, 220.0)
+}
